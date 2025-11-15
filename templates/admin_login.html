@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Administrator Access{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .login-form {
+        max-width: 400px;
+        margin: 50px auto;
+        padding: 30px;
+        background: #f8f9fa;
+        border-radius: 15px;
+    }
+    
+    .login-form h2 {
+        text-align: center;
+        color: #c23616;
+        margin-bottom: 20px;
+    }
+    
+    .login-form input {
+        margin-bottom: 20px;
+    }
+    
+    .login-form button {
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-form">
+    <h2>🔐 Admin Login</h2>
+    
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    
+    <form method="POST" action="{{ url_for('admin_login') }}">
+        <input type="password" name="password" placeholder="Enter admin password" required>
+        <button type="submit">Login</button>
+    </form>
+    
+    <p style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9em;">
+        Default password: chili2025<br>
+        (Change via ADMIN_PASSWORD environment variable)
+    </p>
+</div>
+{% endblock %}

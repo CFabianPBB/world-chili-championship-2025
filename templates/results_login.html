@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Results Access - Admin Only{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .login-form {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 40px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        text-align: center;
+    }
+    
+    .login-form h2 {
+        color: #c23616;
+        margin-bottom: 15px;
+    }
+    
+    .login-form p {
+        color: #666;
+        margin-bottom: 25px;
+        font-size: 1.1em;
+    }
+    
+    .login-form input {
+        margin-bottom: 20px;
+    }
+    
+    .login-form button {
+        width: 100%;
+    }
+    
+    .info-box {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    
+    .info-box h3 {
+        color: #856404;
+        margin-bottom: 10px;
+    }
+    
+    .info-box p {
+        color: #856404;
+        font-size: 0.95em;
+        margin: 5px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-form">
+    <h2>🔐 Results Access</h2>
+    <p>Results are only visible to administrators until voting is complete.</p>
+    
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    
+    <form method="POST" action="{{ url_for('results_login') }}">
+        <input type="password" name="password" placeholder="Enter admin password" required autofocus>
+        <button type="submit">View Results</button>
+    </form>
+    
+    <div class="info-box">
+        <h3>📊 For Voters</h3>
+        <p>✅ Your vote has been submitted successfully!</p>
+        <p>🏆 Results will be revealed when voting closes.</p>
+        <p>🌶️ Thank you for participating!</p>
+    </div>
+    
+    <p style="margin-top: 30px; color: #999; font-size: 0.9em;">
+        <a href="{{ url_for('index') }}" style="color: #ee5a24; text-decoration: none;">
+            ← Back to Voting
+        </a>
+    </p>
+</div>
+{% endblock %}

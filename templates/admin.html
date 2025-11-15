@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Manage Chili Contestants{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .admin-section {
+        margin: 30px 0;
+        padding: 30px;
+        background: #f8f9fa;
+        border-radius: 15px;
+    }
+    
+    .admin-section h2 {
+        color: #c23616;
+        margin-bottom: 20px;
+    }
+    
+    .add-form {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .add-form input {
+        flex: 1;
+        margin: 0;
+    }
+    
+    .add-form button {
+        padding: 12px 25px;
+    }
+    
+    .contestants-list {
+        margin-top: 20px;
+    }
+    
+    .contestant-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        margin: 10px 0;
+        border-left: 5px solid #ee5a24;
+    }
+    
+    .contestant-info {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .remove-btn {
+        background: #dc3545;
+        padding: 8px 20px;
+        font-size: 0.9em;
+    }
+    
+    .remove-btn:hover {
+        background: #c82333;
+    }
+    
+    .logout-btn {
+        background: #6c757d;
+        display: inline-block;
+        margin-top: 20px;
+    }
+    
+    .logout-btn:hover {
+        background: #5a6268;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-section">
+    <h2>➕ Add New Contestant</h2>
+    <div class="add-form">
+        <input type="number" id="contestantNumber" placeholder="Chili Number (e.g., 1, 2, 3...)" min="1" required>
+        <button onclick="addContestant()">Add Chili</button>
+    </div>
+    
+    <div id="message"></div>
+    
+    <h2>🏆 Results Visibility</h2>
+    <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 5px solid #3498db;">
+        <p style="margin-bottom: 15px; color: #555;">
+            Control whether voters can see results or if they're admin-only:
+        </p>
+        <button id="toggleResultsBtn" onclick="toggleResultsPublic()" style="background: linear-gradient(135deg, #3498db, #2980b9); width: 100%;">
+            Loading...
+        </button>
+        <p id="resultsStatus" style="margin-top: 10px; font-size: 0.9em; color: #666; text-align: center;"></p>
+    </div>
+    
+    <h2>📋 Current Contestants</h2>
+    <div class="contestants-list" id="contestantsList">
+        {% if contestants %}
+            {% for num, contestant in contestants.items() %}
+                <div class="contestant-item" id="contestant-{{ num }}">
+                    <span class="contestant-info">🌶️ Chili #{{ num }}</span>
+                    <button class="remove-btn" onclick="removeContestant('{{ num }}')">Remove</button>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                No contestants yet. Add some chilies to get started!
+            </div>
+        {% endif %}
+    </div>
+    
+    <a href="{{ url_for('admin_logout') }}" style="text-decoration: none;">
+        <button class="logout-btn">Logout</button>
+    </a>
+</div>
+
+<script>
+// Load initial results status
+async function loadResultsStatus() {
+    try {
+        const response = await fetch('/api/results_status');
+        const data = await response.json();
+        updateResultsButton(data.results_public);
+    } catch (error) {
+        console.error('Error loading results status:', error);
+    }
+}
+
+function updateResultsButton(isPublic) {
+    const btn = document.getElementById('toggleResultsBtn');
+    const status = document.getElementById('resultsStatus');
+    
+    if (isPublic) {
+        btn.textContent = '🔓 Make Results Private (Admin Only)';
+        btn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+        status.textContent = '✅ Results are currently PUBLIC - everyone can see them';
+        status.style.color = '#27ae60';
+    } else {
+        btn.textContent = '🔐 Make Results Public (Everyone Can See)';
+        btn.style.background = 'linear-gradient(135deg, #27ae60, #229954)';
+        status.textContent = '🔒 Results are currently PRIVATE - admin only';
+        status.style.color = '#e74c3c';
+    }
+}
+
+async function toggleResultsPublic() {
+    try {
+        const response = await fetch('/admin/toggle_results_public', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            updateResultsButton(data.results_public);
+            showMessage(data.message, 'success');
+        } else {
+            showMessage(data.error || 'Error toggling results visibility', 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
+}
+
+async function addContestant() {
+    const number = document.getElementById('contestantNumber').value;
+    
+    if (!number) {
+        showMessage('Please enter a chili number', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/add_contestant', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ number: number })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage(`Chili #${number} added successfully!`, 'success');
+            document.getElementById('contestantNumber').value = '';
+            location.reload();
+        } else {
+            showMessage(data.error || 'Error adding contestant', 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
+}
+
+async function removeContestant(number) {
+    if (!confirm(`Remove Chili #${number}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/remove_contestant', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ number: number })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage(`Chili #${number} removed`, 'success');
+            document.getElementById(`contestant-${number}`).remove();
+            
+            // Check if list is empty
+            const list = document.getElementById('contestantsList');
+            if (list.children.length === 0) {
+                list.innerHTML = '<div class="empty-state">No contestants yet. Add some chilies to get started!</div>';
+            }
+        } else {
+            showMessage(data.error || 'Error removing contestant', 'error');
+        }
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+    }
+}
+
+function showMessage(message, type) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.className = `alert alert-${type}`;
+    messageDiv.textContent = message;
+    
+    setTimeout(() => {
+        messageDiv.className = '';
+        messageDiv.textContent = '';
+    }, 3000);
+}
+
+// Allow Enter key to submit
+document.getElementById('contestantNumber').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        addContestant();
+    }
+});
+
+// Load results status on page load
+loadResultsStatus();
+</script>
+{% endblock %}

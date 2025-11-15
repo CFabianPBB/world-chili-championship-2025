@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Cast Your Vote for the Spiciest Contenders!{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .vote-form {
+        margin: 30px 0;
+    }
+    
+    .form-group {
+        margin: 25px 0;
+        padding: 20px;
+        background: #fff8f0;
+        border-radius: 10px;
+        border-left: 5px solid #ee5a24;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 1.3em;
+        color: #c23616;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    
+    .place-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        margin-right: 10px;
+        color: white;
+        font-weight: bold;
+    }
+    
+    .first-place { background: #ffd700; color: #333; }
+    .second-place { background: #c0c0c0; color: #333; }
+    .third-place { background: #cd7f32; color: white; }
+    
+    select {
+        font-size: 1.1em;
+        cursor: pointer;
+    }
+    
+    .submit-section {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 2px solid #f0f0f0;
+    }
+    
+    .no-contestants {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+        font-size: 1.2em;
+    }
+    
+    .voter-name-group {
+        margin: 20px 0;
+    }
+    
+    .voter-name-group label {
+        font-size: 1.1em;
+        color: #555;
+        display: block;
+        margin-bottom: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vote-form">
+    {% if contestants %}
+        <form id="voteForm">
+            <div class="voter-name-group">
+                <label for="voter_name">Voter Name: <span style="color: #ee5a24;">*</span></label>
+                <input type="text" id="voter_name" name="voter_name" placeholder="Enter your name (or your child's name)" required>
+                <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                    💡 Voting for your kids? Enter their name here and submit their votes!
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <span class="place-badge first-place">🥇 1st Place</span>
+                    Which chili deserves GOLD?
+                </label>
+                <select id="first" name="first" required>
+                    <option value="">Select Chili #</option>
+                    {% for num, contestant in contestants.items() %}
+                        <option value="{{ num }}">Chili #{{ num }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <span class="place-badge second-place">🥈 2nd Place</span>
+                    Which chili takes SILVER?
+                </label>
+                <select id="second" name="second" required>
+                    <option value="">Select Chili #</option>
+                    {% for num, contestant in contestants.items() %}
+                        <option value="{{ num }}">Chili #{{ num }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <span class="place-badge third-place">🥉 3rd Place</span>
+                    Which chili earns BRONZE?
+                </label>
+                <select id="third" name="third" required>
+                    <option value="">Select Chili #</option>
+                    {% for num, contestant in contestants.items() %}
+                        <option value="{{ num }}">Chili #{{ num }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="submit-section">
+                <button type="submit">🌶️ Submit My Vote 🌶️</button>
+            </div>
+        </form>
+        
+        <div id="message" style="margin-top: 20px;"></div>
+    {% else %}
+        <div class="no-contestants">
+            <p>🌶️ No contestants yet!</p>
+            <p>The admin needs to add some chili entries first.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('voteForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const first = document.getElementById('first').value;
+    const second = document.getElementById('second').value;
+    const third = document.getElementById('third').value;
+    const voterName = document.getElementById('voter_name').value;
+    
+    if (!first || !second || !third) {
+        showMessage('Please select all three places!', 'error');
+        return;
+    }
+    
+    if (first === second || first === third || second === third) {
+        showMessage('Please select three different chilies!', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/vote', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ first, second, third, voter_name: voterName })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage('🎉 Vote submitted successfully! Thank you!', 'success');
+            document.getElementById('voteForm').reset();
+            
+            // Show vote again option
+            showVoteAgainOption();
+        } else {
+            showMessage(data.error || 'Error submitting vote', 'error');
+        }
+    } catch (error) {
+        showMessage('Error submitting vote: ' + error.message, 'error');
+    }
+});
+
+function showMessage(message, type) {
+    const messageDiv = document.getElementById('message');
+    messageDiv.className = `alert alert-${type}`;
+    messageDiv.textContent = message;
+}
+
+function showVoteAgainOption() {
+    const messageDiv = document.getElementById('message');
+    
+    // Create vote again container
+    const voteAgainHTML = `
+        <div style="margin-top: 20px; text-align: center;">
+            <p style="font-size: 1.2em; margin-bottom: 15px;">What would you like to do?</p>
+            <button onclick="voteForSomeoneElse()" style="margin: 10px; background: linear-gradient(135deg, #27ae60, #229954); padding: 15px 30px;">
+                👨‍👩‍👧‍👦 Vote for Someone Else
+            </button>
+            <button onclick="window.location.href='/results'" style="margin: 10px; padding: 15px 30px;">
+                🏆 View Results (Admin)
+            </button>
+            <p style="font-size: 0.9em; color: #666; margin-top: 15px;">
+                Note: Results are only visible to administrators
+            </p>
+        </div>
+    `;
+    
+    messageDiv.innerHTML = `
+        <div class="alert alert-success">
+            🎉 Vote submitted successfully! Thank you!
+        </div>
+        ${voteAgainHTML}
+    `;
+}
+
+function voteForSomeoneElse() {
+    // Clear the message and reset form
+    document.getElementById('message').innerHTML = '';
+    document.getElementById('voteForm').reset();
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Focus on voter name field
+    document.getElementById('voter_name').focus();
+    
+    // Show a helpful message
+    const messageDiv = document.getElementById('message');
+    messageDiv.className = 'alert alert-success';
+    messageDiv.textContent = '👍 Ready for the next vote! Enter their name and select their choices.';
+    
+    setTimeout(() => {
+        messageDiv.innerHTML = '';
+    }, 3000);
+}
+</script>
+{% endblock %}

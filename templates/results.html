@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block subtitle %}The Chili Champions Have Been Decided!{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .results-container {
+        margin: 30px 0;
+    }
+    
+    .winner-card {
+        margin: 25px 0;
+        padding: 30px;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .winner-card.first {
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        border: 3px solid #d4af37;
+        animation-delay: 0.2s;
+    }
+    
+    .winner-card.second {
+        background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+        border: 3px solid #a8a8a8;
+        animation-delay: 0.4s;
+    }
+    
+    .winner-card.third {
+        background: linear-gradient(135deg, #cd7f32, #e59c68);
+        border: 3px solid #b87333;
+        animation-delay: 0.6s;
+    }
+    
+    .winner-card h2 {
+        font-size: 2em;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    
+    .winner-card .chili-number {
+        font-size: 3em;
+        font-weight: bold;
+        color: #c23616;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .winner-card .score {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #333;
+        margin: 10px 0;
+    }
+    
+    .vote-breakdown {
+        margin-top: 15px;
+        font-size: 1em;
+        color: #555;
+        background: rgba(255,255,255,0.5);
+        padding: 15px;
+        border-radius: 10px;
+    }
+    
+    .vote-breakdown div {
+        margin: 5px 0;
+    }
+    
+    .medal {
+        font-size: 4em;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        opacity: 0.3;
+    }
+    
+    .no-votes {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+        font-size: 1.3em;
+    }
+    
+    .total-votes {
+        text-align: center;
+        font-size: 1.2em;
+        color: #666;
+        margin: 30px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .refresh-btn {
+        display: block;
+        margin: 30px auto;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    {% if results %}
+        <div class="total-votes">
+            🗳️ Total Votes Cast: <strong>{{ total_votes }}</strong>
+        </div>
+        
+        {% for result in results %}
+            {% if loop.index == 1 %}
+                <div class="winner-card first">
+                    <div class="medal">🥇</div>
+                    <h2>🏆 CHAMPION! 🏆</h2>
+                    <div class="chili-number">Chili #{{ result.number }}</div>
+                    <div class="score">{{ result.score }} Points</div>
+                    <div class="vote-breakdown">
+                        <div>🥇 First Place Votes: {{ result.first_place_votes }}</div>
+                        <div>🥈 Second Place Votes: {{ result.second_place_votes }}</div>
+                        <div>🥉 Third Place Votes: {{ result.third_place_votes }}</div>
+                    </div>
+                </div>
+            {% elif loop.index == 2 %}
+                <div class="winner-card second">
+                    <div class="medal">🥈</div>
+                    <h2>Second Place</h2>
+                    <div class="chili-number">Chili #{{ result.number }}</div>
+                    <div class="score">{{ result.score }} Points</div>
+                    <div class="vote-breakdown">
+                        <div>🥇 First Place Votes: {{ result.first_place_votes }}</div>
+                        <div>🥈 Second Place Votes: {{ result.second_place_votes }}</div>
+                        <div>🥉 Third Place Votes: {{ result.third_place_votes }}</div>
+                    </div>
+                </div>
+            {% elif loop.index == 3 %}
+                <div class="winner-card third">
+                    <div class="medal">🥉</div>
+                    <h2>Third Place</h2>
+                    <div class="chili-number">Chili #{{ result.number }}</div>
+                    <div class="score">{{ result.score }} Points</div>
+                    <div class="vote-breakdown">
+                        <div>🥇 First Place Votes: {{ result.first_place_votes }}</div>
+                        <div>🥈 Second Place Votes: {{ result.second_place_votes }}</div>
+                        <div>🥉 Third Place Votes: {{ result.third_place_votes }}</div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        
+        <div class="refresh-btn">
+            <button onclick="location.reload()">🔄 Refresh Results</button>
+        </div>
+    {% else %}
+        <div class="no-votes">
+            <p>🌶️ No votes yet!</p>
+            <p>Be the first to cast your vote!</p>
+            <br>
+            <a href="{{ url_for('index') }}" style="text-decoration: none;">
+                <button>Go Vote Now!</button>
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
